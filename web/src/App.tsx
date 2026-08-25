@@ -352,20 +352,6 @@ export default function App() {
           <button disabled={!robot.connected()} onClick={() => robot.stop()}>
             stop
           </button>
-          <button
-            disabled={!robot.connected()}
-            onClick={() => robot.returnToStart(gains())}
-            title="drive back to the starting pose"
-          >
-            return home
-          </button>
-          <button
-            disabled={!robot.connected()}
-            onClick={() => robot.reset()}
-            title="teleport the sim to the start pose (use when you moved the robot by hand)"
-          >
-            reset
-          </button>
           <span class={`status status-${robot.status()}`}>{robot.status()}</span>
         </div>
         <dl class="telemetry">
