@@ -40,7 +40,7 @@ object Server {
     private val pd = PDController()
     private val tolerances = Tolerances.defaults()
 
-    private var wsServer: WsServer? = null
+    @Volatile private var wsServer: WsServer? = null
 
     // ---- cursor state (guarded by [lock]) ----
     private val lock = Any()
@@ -48,17 +48,36 @@ object Server {
     private var activeBlockIdx: Int = -1
     private var pathIdx: Int = 0
     private var gains: Gains = Gains.defaults()
+    /** Set by [registerOpMode]; used as the target for `return_to_start`. */
+    private var sessionStart: Pose = ProgramCompiler.canonicalFieldStart()
+    /**
+     * When a `play` arrives on a WS thread we don't yet have the robot's
+     * current pose (only the OpMode has it, via reportTick). Stash the
+     * message here and defer compilation to the next reportTick, which
+     * hands us a fresh pose.
+     */
+    private var pendingProgram: ProgramMsg? = null
 
     // ---------------------------------------------------------------------
     // OpMode-facing lifecycle
     // ---------------------------------------------------------------------
 
-    fun registerOpMode() {
+    /**
+     * Start the WS server and capture the OpMode's start pose. Call from
+     * the OpMode *after* `waitForStart` and one initial pose read, so
+     * `return_to_start` has an honest anchor.
+     */
+    fun registerOpMode(sessionStart: Pose) {
+        synchronized(lock) { this.sessionStart = sessionStart }
         if (wsServer != null) return
         val srv = WsServer(WS_PORT, Handlers())
         srv.start(NANOHTTPD_SOCKET_READ_TIMEOUT, true)
         wsServer = srv
-        EventLog.event("lifecycle", "WS server listening on :$WS_PORT")
+        EventLog.event(
+            "lifecycle",
+            "WS server listening on :$WS_PORT (session start: " +
+                "x=${fmt(sessionStart.x())} y=${fmt(sessionStart.y())} θ=${fmt(Math.toDegrees(sessionStart.theta()))}°)",
+        )
     }
 
     fun unregisterOpMode() {
@@ -68,9 +87,12 @@ object Server {
             blocks = emptyList()
             activeBlockIdx = -1
             pathIdx = 0
+            pendingProgram = null
         }
         EventLog.event("lifecycle", "WS server stopped")
     }
+
+    private fun fmt(v: Double): String = String.format("%.3f", v)
 
     // ---------------------------------------------------------------------
     // OpMode-facing control loop API
@@ -94,9 +116,26 @@ object Server {
 
         var advancedBlock = false
         var newTargetToBroadcast: Pose? = null
+        var justCompiled = false
         val ws = wsServer
 
         synchronized(lock) {
+            // Deferred compile: play messages don't know the current pose;
+            // the first reportTick after a play is where we anchor the path.
+            pendingProgram?.let { program ->
+                blocks = ProgramCompiler.compile(pose, sessionStart, program)
+                activeBlockIdx = if (blocks.isNotEmpty()) 0 else -1
+                pathIdx = 0
+                pendingProgram = null
+                justCompiled = true
+                newTargetToBroadcast = blocks.firstOrNull()?.path?.firstOrNull()
+                EventLog.event(
+                    "program",
+                    "compiled from x=${fmt(pose.x())} y=${fmt(pose.y())} θ=${fmt(Math.toDegrees(pose.theta()))}° " +
+                        "(${blocks.size} blocks)",
+                )
+            }
+
             if (activeBlockIdx in blocks.indices) {
                 val block = blocks[activeBlockIdx]
                 val lastIdx = block.path.size - 1
@@ -128,7 +167,7 @@ object Server {
         ws.broadcastPose(pose)
         ws.broadcastMotors(volts)
         newTargetToBroadcast?.let { ws.broadcastTarget(it) }
-        if (advancedBlock) {
+        if (advancedBlock || justCompiled) {
             ws.broadcastActive(activeBlockIdOrNull())
             ws.broadcastActivePath(activePathOrEmpty())
         }
@@ -146,20 +185,26 @@ object Server {
             )
             synchronized(lock) {
                 if (newGains != null) gains = newGains
-                blocks = ProgramCompiler.compile(ProgramCompiler.startPose(), program)
-                activeBlockIdx = if (blocks.isNotEmpty()) 0 else -1
+                // Compilation is deferred to the next reportTick so we
+                // anchor the path to the robot's *current* pose (which
+                // this WS thread doesn't know about). Clear any active
+                // program immediately so we don't keep tracking stale
+                // targets in the meantime.
+                pendingProgram = program
+                blocks = emptyList()
+                activeBlockIdx = -1
                 pathIdx = 0
             }
             wsServer?.let {
-                it.broadcastActive(activeBlockIdOrNull())
-                it.broadcastActivePath(activePathOrEmpty())
-                currentTarget()?.let { t -> it.broadcastTarget(t) }
+                it.broadcastActive(null)
+                it.broadcastActivePath(emptyList())
             }
         }
 
         override fun onStop() {
             EventLog.event("rx", "stop")
             synchronized(lock) {
+                pendingProgram = null
                 blocks = emptyList()
                 activeBlockIdx = -1
                 pathIdx = 0

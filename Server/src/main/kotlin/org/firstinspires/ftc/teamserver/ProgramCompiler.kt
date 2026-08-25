@@ -14,6 +14,10 @@ import kotlin.math.sin
  * blocks, each carrying a pose-sample path the PD controller steps through.
  * Keep the constants and geometry aligned with the TS version — the client
  * relies on them being identical so its overlay matches the executed path.
+ *
+ * Paths are anchored to whatever [currentPose] is at compile time (not to
+ * any absolute field frame), so "forward" always means "one tile from
+ * where I am now." [sessionStart] is only consulted by `return_to_start`.
  */
 object ProgramCompiler {
     const val TILE = 0.6
@@ -23,25 +27,29 @@ object ProgramCompiler {
 
     data class Block(val blockId: String, val path: List<Pose>)
 
-    /** Canonical start pose: bottom-center tile, facing +y (up-field). */
-    fun startPose(): Pose {
+    /**
+     * Canonical field-relative start pose used by the standalone [Main]
+     * runner and the browser overlay. Not consulted on-robot — the OpMode
+     * uses whatever pose the OTOS reports at start.
+     */
+    fun canonicalFieldStart(): Pose {
         val cx = (FIELD_TILES / 2.0) * TILE
         val cy = 0.5 * TILE
         return Pose(cx, cy, PI / 2)
     }
 
-    fun compile(start: Pose, program: ProgramMsg): List<Block> {
+    fun compile(currentPose: Pose, sessionStart: Pose, program: ProgramMsg): List<Block> {
         val out = mutableListOf<Block>()
-        var cur = start
+        var cur = currentPose
         for (cmd in program.commands) {
-            val path = pathFor(cur, cmd)
+            val path = pathFor(cur, sessionStart, cmd)
             out.add(Block(cmd.id, path))
             if (path.isNotEmpty()) cur = path.last()
         }
         return out
     }
 
-    private fun pathFor(start: Pose, cmd: CommandMsg): List<Pose> = when (cmd.op) {
+    private fun pathFor(start: Pose, sessionStart: Pose, cmd: CommandMsg): List<Pose> = when (cmd.op) {
         "forward", "backward", "strafe_left", "strafe_right" -> {
             val bodyAngle = when (cmd.op) {
                 "forward" -> 0.0
@@ -68,7 +76,7 @@ object ProgramCompiler {
             }
         }
         "return_to_start" -> {
-            val goal = startPose()
+            val goal = sessionStart
             val dx = goal.x() - start.x()
             val dy = goal.y() - start.y()
             val dtheta = wrapPi(goal.theta() - start.theta())

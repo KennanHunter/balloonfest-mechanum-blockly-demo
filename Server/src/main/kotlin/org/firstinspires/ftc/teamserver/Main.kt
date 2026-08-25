@@ -21,10 +21,10 @@ fun main() {
     EventLog.enabled = true
     val loopMs = 33L                                    // ~30 Hz
     val pd = PDController()
-    var pose = ProgramCompiler.startPose()
+    var pose = ProgramCompiler.canonicalFieldStart()
     var vel = BodyVel.zero()
 
-    Server.registerOpMode()
+    Server.registerOpMode(pose)
     println("standalone server up. ws://localhost:8081  (Ctrl+C to exit)")
 
     Runtime.getRuntime().addShutdownHook(Thread { Server.unregisterOpMode() })

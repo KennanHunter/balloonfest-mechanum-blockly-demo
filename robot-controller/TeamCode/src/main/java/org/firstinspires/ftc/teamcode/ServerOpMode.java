@@ -54,12 +54,16 @@ public class ServerOpMode extends LinearOpMode {
         otos.calibrateImu();
         otos.resetTracking();
 
-        Server.INSTANCE.registerOpMode();
-
         try {
-            telemetry.addLine("Server bridge live on :8081. Waiting for start.");
+            telemetry.addLine("Waiting for start. Server bridge boots on play.");
             telemetry.update();
             waitForStart();
+
+            // Anchor session start (used as `return_to_start`'s goal) to the
+            // pose the OTOS reports right after start — not any field-frame
+            // origin, since we can't know where on the field we're placed.
+            Pose sessionStart = readPose();
+            Server.INSTANCE.registerOpMode(sessionStart);
 
             while (opModeIsActive()) {
                 Pose pose = readPose();
