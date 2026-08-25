@@ -1,0 +1,7 @@
+node_modules
+
+# Gradle: commit the wrapper (gradlew, gradle/wrapper/) so clones can build
+# without a preinstalled gradle. Ignore the local caches + build outputs.
+.gradle
+.kotlin
+build

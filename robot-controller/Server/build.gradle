@@ -1,0 +1,41 @@
+apply plugin: 'com.android.library'
+apply plugin: 'org.jetbrains.kotlin.android'
+apply from: '../build.dependencies.gradle'
+
+android {
+    namespace = 'org.firstinspires.ftc.teamserver'
+    compileSdkVersion 30
+
+    defaultConfig {
+        minSdkVersion 24
+        //noinspection ExpiredTargetSdkVersion
+        targetSdkVersion 28
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+
+    // Single source of truth lives at /Server. This module is a thin
+    // Android-library wrapper that pulls those same files into the RC app
+    // build. Standalone dev runs the same code as a Kotlin JVM app via
+    // `./gradlew :Server:run` at the repo root.
+    sourceSets {
+        main {
+            java.srcDirs = ['../../Server/src/main/java', '../../Server/src/main/kotlin']
+            // Deliberately omit the standalone Main.kt entry point — nothing
+            // on-robot should reach it, and pulling it in doesn't hurt.
+        }
+    }
+}
+
+dependencies {
+    // Matches the standalone build. Gson is transitively available via
+    // FTC RobotCore; declared here to be explicit.
+    implementation 'org.nanohttpd:nanohttpd-websocket:2.3.1'
+}

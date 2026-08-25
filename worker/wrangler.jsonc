@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "robot-sim",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-08-01",
+  "assets": {
+    "directory": "../web/dist/client",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "ROBOT", "class_name": "RobotSim" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["RobotSim"] }],
+  "observability": { "enabled": true }
+}

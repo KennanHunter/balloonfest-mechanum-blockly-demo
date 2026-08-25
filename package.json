@@ -1,0 +1,14 @@
+{
+  "name": "demo",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "dev": "just dev",
+    "dev:web": "pnpm --filter web dev",
+    "dev:worker": "pnpm --filter robot-sim-worker dev",
+    "build": "pnpm --filter web build",
+    "deploy": "pnpm build && pnpm --filter robot-sim-worker exec wrangler deploy",
+    "types": "pnpm --filter robot-sim-worker types"
+  }
+}

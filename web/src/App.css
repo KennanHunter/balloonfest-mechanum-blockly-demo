@@ -1,0 +1,243 @@
+body {
+  margin: 0;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+}
+
+.app-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  height: 100vh;
+  padding: 12px;
+  box-sizing: border-box;
+  background: #1f2229;
+  color: #e6e8ee;
+}
+
+.pane {
+  background: #282c34;
+  border-radius: 8px;
+  padding: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.field-pane {
+  gap: 12px;
+}
+
+.field-image {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  border-radius: 6px;
+  background: #33384a;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  align-self: center;
+}
+
+.field-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.field-controls button {
+  font-size: 1rem;
+  padding: 0.5rem 1.25rem;
+  cursor: pointer;
+  border: 0;
+  border-radius: 4px;
+  background: #4b6cff;
+  color: white;
+}
+
+.field-controls .status {
+  margin-left: auto;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.field-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.status-open {
+  color: #7dd88a;
+}
+.status-connecting {
+  color: #f4c760;
+}
+.status-closed {
+  color: #f07070;
+}
+
+.program-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0 10px;
+  font-size: 0.85rem;
+  color: #9aa3b8;
+}
+
+.gains-panel {
+  background: #1f2229;
+  border: 1px solid #3a4054;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+}
+
+.gains-panel summary {
+  cursor: pointer;
+  color: #9aa3b8;
+  user-select: none;
+}
+
+.gains-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+  margin-top: 8px;
+}
+
+.gains-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: #9aa3b8;
+  font-size: 0.75rem;
+}
+
+.gains-grid input {
+  background: #12141a;
+  color: #e6e8ee;
+  border: 1px solid #3a4054;
+  border-radius: 3px;
+  padding: 4px 6px;
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.program-bar select,
+.program-bar input,
+.program-bar button {
+  background: #1f2229;
+  color: #e6e8ee;
+  border: 1px solid #3a4054;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+
+.program-bar input {
+  min-width: 8ch;
+  flex: 0 1 14ch;
+}
+
+.program-bar button {
+  cursor: pointer;
+}
+
+.program-bar button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.telemetry {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  font-size: 0.85rem;
+}
+
+.telemetry dt {
+  color: #9aa3b8;
+}
+
+.telemetry dd {
+  margin: 0;
+  font-family: ui-monospace, monospace;
+}
+
+.telemetry pre {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.debug-panel {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 1000;
+  width: 300px;
+  max-height: 70vh;
+  overflow: auto;
+  padding: 10px 12px;
+  background: rgba(31, 34, 41, 0.94);
+  color: #e6e8ee;
+  border: 1px solid #3a4054;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(4px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.debug-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #9aa3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.7rem;
+}
+
+.debug-close {
+  background: transparent;
+  color: #9aa3b8;
+  border: 0;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.debug-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.debug-actions button {
+  flex: 1;
+  padding: 4px 8px;
+  background: #1f2229;
+  color: #e6e8ee;
+  border: 1px solid #3a4054;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.debug-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
